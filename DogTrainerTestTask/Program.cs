@@ -20,6 +20,7 @@ public class Program
                 o.EnableDetailedErrors();
                 o.EnableSensitiveDataLogging();
             }
+            o.UseSeeding(DataConfiguration.SeedEntities);
         });
 
         builder.Services.AddIdentity<User, UserRole>(o =>
@@ -58,7 +59,6 @@ public class Program
 
         using var scope = app.Services.CreateScope();
         scope.ServiceProvider.ConfigureRoles();
-
         app.Run();
     }
 }
