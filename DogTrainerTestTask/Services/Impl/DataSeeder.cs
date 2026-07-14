@@ -80,16 +80,40 @@ public class DataSeeder(AppDbContext dbContext, RoleManager<UserRole> roleManage
 
         if (!dbContext.Litters.Any())
         {
-            var litters = Enumerable.Range(1, 50)
-                .Select(i => new Litter
+            var litters = new List<Litter>
+            {
+                new()
                 {
-                    Id = i,
-                    BreederId = random.Next(1, 6),
-                    Status = (LitterStatus)random.Next(
-                        Enum.GetValues<LitterStatus>().Length),
-                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-random.Next(0, 365))
-                })
-                .ToList();
+                    Id = 1,
+                    BreederId = 1,
+                    Status = LitterStatus.Approved,
+                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-30)
+                },
+                new()
+                {
+                    Id = 2,
+                    BreederId = 1,
+                    Status = LitterStatus.Approved,
+                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-14)
+                },
+                new()
+                {
+                    Id = 3,
+                    BreederId = 1,
+                    Status = LitterStatus.Approved,
+                    CreatedAt = DateTimeOffset.UtcNow.AddDays(-120)
+                }
+            };
+
+            litters.AddRange(
+                Enumerable.Range(4, 47)
+                    .Select(i => new Litter
+                    {
+                        Id = i,
+                        BreederId = random.Next(1, 3),
+                        Status = (LitterStatus)random.Next(Enum.GetValues<LitterStatus>().Length),
+                        CreatedAt = DateTimeOffset.UtcNow.AddDays(-random.Next(0, 365))
+                    }));
 
             dbContext.AddRange(litters);
         }
