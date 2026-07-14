@@ -5,7 +5,7 @@ namespace DogTrainerTestTask.Services;
 
 public interface ILittersService
 {
-    Task PublishLitterAsync(long litterId);
+    Task PublishLitterAsync(long breederId, long litterId);
     
     Task<PaginationResultDto<LitterDto>> GetLittersByBreederIdAsync(long breederId, GetLittersRequestDto getLittersRequestDto);
 }
