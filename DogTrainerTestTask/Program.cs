@@ -53,6 +53,8 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+        builder.Services.AddTransient<ILittersService, LittersService>();
         builder.Services.AddTransient<IDataSeeder, DataSeeder>();
         
         var app = builder.Build();
