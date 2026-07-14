@@ -18,7 +18,7 @@ public class LittersServiceTest
     private readonly AppDbContext dbContext;
     private readonly LittersService service;
     private readonly Mock<INotificationService> notificationService;
-    
+
     public LittersServiceTest()
     {
         connection = new SqliteConnection("DataSource=:memory:");
@@ -32,44 +32,44 @@ public class LittersServiceTest
         dbContext.Database.EnsureCreated();
 
         notificationService = new Mock<INotificationService>();
-        
-        service = new LittersService(dbContext,notificationService.Object);
+
+        service = new LittersService(dbContext, notificationService.Object);
     }
-    
+
     [Fact]
     public async Task PublishLitterAsync_ShouldThrowNotFoundException_WhenLitterDontBelongToUser()
     {
-        dbContext.Users.Add(new User
-        {
-            Id = 1,
-            UserName = "breeder1@test.com",
-            Email = "breeder1@test.com"
-        });
-        
-        dbContext.Users.Add(new User
-        {
-            Id = 2,
-            UserName = "breeder1@test.com",
-            Email = "breeder1@test.com"
-        });
-        
-        dbContext.Litters.Add(new Litter
+        await dbContext.Users.AddRangeAsync(
+            new User
+            {
+                Id = 1,
+                UserName = "breeder1@test.com",
+                Email = "breeder1@test.com"
+            },
+            new User
+            {
+                Id = 2,
+                UserName = "breeder1@test.com",
+                Email = "breeder1@test.com"
+            });
+
+        await dbContext.Litters.AddAsync(new Litter
         {
             Id = 1,
             BreederId = 2,
             Status = LitterStatus.Submitted,
             CreatedAt = DateTime.UtcNow,
-        });
-        
-        dbContext.BreederBenefits.Add(new BreederBenefit
+        },CancellationToken.None);
+
+        await dbContext.BreederBenefits.AddAsync(new BreederBenefit
         {
             BreederId = 1,
             UsedCount = 0,
             FreeLimit = 3,
-        });
-        
+        },CancellationToken.None);
+
         await dbContext.SaveChangesAsync(CancellationToken.None);
-        
+
         await Assert.ThrowsAsync<NotFoundException>(() => service.PublishLitterAsync(1, 1));
     }
 
@@ -77,121 +77,121 @@ public class LittersServiceTest
     [Fact]
     public async Task PublishLitterAsync_ShouldThrowDomainException_WhenAlreadyPublished()
     {
-        dbContext.Users.Add(new User
+        await dbContext.Users.AddAsync(new User
         {
             Id = 1,
             UserName = "breeder1@test.com",
             Email = "breeder1@test.com"
-        });
-        
-        dbContext.Litters.Add(new Litter
+        },CancellationToken.None);
+
+        await dbContext.Litters.AddAsync(new Litter
         {
             Id = 1,
             BreederId = 1,
             Status = LitterStatus.Published,
             CreatedAt = DateTime.UtcNow,
-        });
-        
-        dbContext.BreederBenefits.Add(new BreederBenefit
+        }, CancellationToken.None);
+
+        await dbContext.BreederBenefits.AddAsync(new BreederBenefit
         {
             BreederId = 1,
             UsedCount = 0,
             FreeLimit = 3,
-        });
-        
+        }, CancellationToken.None);
+
         await dbContext.SaveChangesAsync(CancellationToken.None);
 
         await Assert.ThrowsAsync<DomainException>(() => service.PublishLitterAsync(1, 1));
     }
-    
+
     [Fact]
     public async Task PublishLitterAsync_ShouldThrowDomainException_WhenLitterIsNotApproved()
     {
-        dbContext.Users.Add(new User
+        await dbContext.Users.AddAsync(new User
         {
             Id = 1,
             UserName = "breeder1@test.com",
             Email = "breeder1@test.com"
-        });
-        
-        dbContext.Litters.Add(new Litter
+        }, CancellationToken.None);
+
+        await dbContext.Litters.AddAsync(new Litter
         {
             Id = 1,
             BreederId = 1,
             Status = LitterStatus.Submitted,
             CreatedAt = DateTime.UtcNow,
-        });
-        
-        dbContext.BreederBenefits.Add(new BreederBenefit
+        }, CancellationToken.None);
+
+        await dbContext.BreederBenefits.AddAsync(new BreederBenefit
         {
             BreederId = 1,
             UsedCount = 0,
             FreeLimit = 3,
-        });
-        
+        }, CancellationToken.None);
+
         await dbContext.SaveChangesAsync(CancellationToken.None);
 
         await Assert.ThrowsAsync<DomainException>(() => service.PublishLitterAsync(1, 1));
     }
-    
+
     [Fact]
     public async Task PublishLitterAsync_ShouldThrowDomainExceptionAndLog_WhenFreeLimitExceeded()
     {
-        dbContext.Users.Add(new User
+        await dbContext.Users.AddAsync(new User
         {
             Id = 1,
             UserName = "breeder1@test.com",
             Email = "breeder1@test.com"
-        });
-        
-        dbContext.Litters.Add(new Litter
+        }, CancellationToken.None);
+
+        await dbContext.Litters.AddAsync(new Litter
         {
             Id = 1,
             BreederId = 1,
             Status = LitterStatus.Approved,
             CreatedAt = DateTime.UtcNow,
-        });
-        
-        dbContext.BreederBenefits.Add(new BreederBenefit
+        }, CancellationToken.None);
+
+        await dbContext.BreederBenefits.AddAsync(new BreederBenefit
         {
             BreederId = 1,
             UsedCount = 3,
             FreeLimit = 3,
-        });
-        
+        }, CancellationToken.None);
+
         await dbContext.SaveChangesAsync(CancellationToken.None);
 
         await Assert.ThrowsAsync<DomainException>(() => service.PublishLitterAsync(1, 1));
-        
+
         var auditLog = await dbContext.AuditLogs.FirstOrDefaultAsync(CancellationToken.None);
 
         Assert.NotNull(auditLog);
     }
-    
+
     [Fact]
     public async Task PublishLitterAsync_ShouldPublishAndSendEmailAndLog_WhenApproved()
     {
-        dbContext.Users.Add(new User
+        await dbContext.Users.AddAsync(new User
         {
             Id = 1,
             UserName = "breeder1@test.com",
             Email = "breeder1@test.com"
-        });
-        
-        dbContext.Litters.Add(new Litter
+        }, CancellationToken.None);
+
+        await dbContext.Litters.AddAsync(new Litter
         {
             Id = 1,
             BreederId = 1,
             Status = LitterStatus.Approved,
             CreatedAt = DateTime.UtcNow,
-        });
+        },CancellationToken.None );
 
-        dbContext.BreederBenefits.Add(new BreederBenefit
+        await dbContext.BreederBenefits.AddAsync(new BreederBenefit
         {
             BreederId = 1,
             UsedCount = 0,
             FreeLimit = 3
-        });
+        }, CancellationToken.None);
 
         await dbContext.SaveChangesAsync(CancellationToken.None);
 
@@ -200,28 +200,28 @@ public class LittersServiceTest
         var litter = await dbContext.Litters.FirstOrDefaultAsync(x => x.Id == 1, CancellationToken.None);
 
         Assert.Equal(LitterStatus.Published, litter!.Status);
-        
+
         notificationService.Verify(x => x.Notify(It.IsAny<string>()), Times.Once);
     }
-    
+
     [Fact]
     public async Task GetLittersByBreederIdAsync_ShouldReturnLitters_WhenBreederHasLitters()
     {
-        dbContext.Users.Add(new User
+        await dbContext.Users.AddAsync(new User
         {
             Id = 1,
             UserName = "breeder1@test.com",
             Email = "breeder1@test.com"
-        });
-        
-        dbContext.Users.Add(new User
+        }, CancellationToken.None);
+
+        await dbContext.Users.AddAsync(new User
         {
             Id = 2,
             UserName = "breeder1@test.com",
             Email = "breeder1@test.com"
-        });
-        
-        dbContext.Litters.AddRange(
+        }, CancellationToken.None);
+
+        await dbContext.Litters.AddRangeAsync(
             new Litter
             {
                 Id = 1,
@@ -240,25 +240,25 @@ public class LittersServiceTest
         await dbContext.SaveChangesAsync(CancellationToken.None);
 
         var requestDto = new GetLittersRequestDto(null, 1, 10);
-        
+
         var result = await service.GetLittersByBreederIdAsync(1, requestDto);
 
         Assert.Single(result.Items);
         Assert.Equal(1, result.Items[0].Id);
         Assert.Equal(1, result.TotalCount);
     }
-    
+
     [Fact]
     public async Task GetLittersByBreederIdAsync_ShouldReturnLitters_WhenStatusProvided()
     {
-        dbContext.Users.Add(new User
+        await dbContext.Users.AddAsync(new User
         {
             Id = 1,
             UserName = "breeder1@test.com",
             Email = "breeder1@test.com"
-        });
-        
-        dbContext.Litters.AddRange(
+        }, CancellationToken.None);
+
+        await dbContext.Litters.AddRangeAsync(
             new Litter
             {
                 Id = 1,
@@ -277,24 +277,24 @@ public class LittersServiceTest
         await dbContext.SaveChangesAsync(CancellationToken.None);
 
         var requestDto = new GetLittersRequestDto(LitterStatus.Published, 1, 10);
-        
+
         var result = await service.GetLittersByBreederIdAsync(1, requestDto);
 
         Assert.Single(result.Items);
         Assert.Equal(2, result.Items[0].Id);
     }
-    
+
     [Fact]
     public async Task GetLittersByBreederIdAsync_ShouldPaginateResults()
     {
-        dbContext.Users.Add(new User
+        await dbContext.Users.AddAsync(new User
         {
             Id = 1,
             UserName = "breeder1@test.com",
             Email = "breeder1@test.com"
-        });
-        
-        dbContext.Litters.AddRange(
+        }, CancellationToken.None);
+
+        await dbContext.Litters.AddRangeAsync(
             new Litter
             {
                 Id = 1,
@@ -321,7 +321,7 @@ public class LittersServiceTest
 
         var requestDto = new GetLittersRequestDto(LitterStatus.Approved, 1, 1);
 
-        
+
         var result = await service.GetLittersByBreederIdAsync(1, requestDto);
 
         Assert.Single(result.Items);

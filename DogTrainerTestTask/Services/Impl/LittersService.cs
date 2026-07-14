@@ -11,7 +11,7 @@ public class LittersService(AppDbContext dbContext, INotificationService notific
 {
     public async Task PublishLitterAsync(long breederId, long litterId)
     {
-        var litter = dbContext.Litters.FirstOrDefault(x => x.BreederId == breederId && x.Id == litterId);
+        var litter = await dbContext.Litters.FirstOrDefaultAsync(x => x.BreederId == breederId && x.Id == litterId);
         if (litter is null)
         {
             throw new NotFoundException($"Litter {litterId} not found");
@@ -27,7 +27,7 @@ public class LittersService(AppDbContext dbContext, INotificationService notific
             throw new DomainException($"Litter {litterId} not approved");   
         }
         
-        var breederBenefits = dbContext.BreederBenefits.FirstOrDefault(x => x.BreederId == breederId);
+        var breederBenefits = await dbContext.BreederBenefits.FirstOrDefaultAsync(x => x.BreederId == breederId);
         
         // Breeder benefits must always exist for every user.
         // A missing record indicates an invalid state.
@@ -39,7 +39,7 @@ public class LittersService(AppDbContext dbContext, INotificationService notific
         bool exceedLimit = breederBenefits.UsedCount + 1 > breederBenefits.FreeLimit;
         if (exceedLimit)
         {
-            dbContext.AuditLogs.Add(new AuditLog()
+            await dbContext.AuditLogs.AddAsync(new AuditLog()
             { 
                 Action = "Publish attempt failed - limits exceeded", 
                 EntityId = litterId,
@@ -58,7 +58,7 @@ public class LittersService(AppDbContext dbContext, INotificationService notific
         breederBenefits.UsedCount++;
         litter.Status = LitterStatus.Published;
         
-        dbContext.AuditLogs.Add(new AuditLog()
+        await dbContext.AuditLogs.AddAsync(new AuditLog()
         { 
             Action = "Published for Free", 
             EntityId = litterId,
