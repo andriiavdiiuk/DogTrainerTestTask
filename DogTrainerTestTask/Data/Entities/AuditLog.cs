@@ -9,6 +9,6 @@ public class AuditLog
     public string? OldValues { get; set; }        
     public string? NewValues { get; set; }      
     public long ModifiedBy { get; set; }       
-    public DateTimeOffset CreatedAt { get; set; } 
+    public DateTime CreatedAt { get; set; } 
     public User? ModifiedByUser { get; set; }
 }

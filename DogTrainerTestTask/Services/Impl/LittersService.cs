@@ -88,7 +88,7 @@ public class LittersService(AppDbContext dbContext, INotificationService notific
 
         var totalCount = await query.CountAsync();
         var items = await query
-            .OrderByDescending(x => x.Id)
+            .OrderByDescending(x => x.CreatedAt)
             .Skip(skipItems)
             .Take(getLittersRequestDto.PageSize)
             .Select(x => x.ToLitterDto())
