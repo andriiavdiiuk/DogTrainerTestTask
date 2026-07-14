@@ -53,7 +53,7 @@ public class LittersService(AppDbContext dbContext, INotificationService notific
 
         await using var transaction = await dbContext.Database.BeginTransactionAsync();
         
-        var oldLitter = JsonSerializer.Serialize(litter);
+        var oldLitter = JsonSerializer.Serialize(litter.ToLitterAuditDto());
         
         breederBenefits.UsedCount++;
         litter.Status = LitterStatus.Published;
@@ -66,7 +66,7 @@ public class LittersService(AppDbContext dbContext, INotificationService notific
             ModifiedBy = breederId,
             CreatedAt =  DateTime.UtcNow,
             OldValues = oldLitter,
-            NewValues = JsonSerializer.Serialize(litter)
+            NewValues = JsonSerializer.Serialize(litter.ToLitterAuditDto())
         });
         notificationService.Notify("Published litter for free");
         await dbContext.SaveChangesAsync();
