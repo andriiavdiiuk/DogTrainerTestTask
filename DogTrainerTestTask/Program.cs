@@ -52,8 +52,10 @@ public class Program
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+        builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
+        
         builder.Services.AddTransient<ILittersService, LittersService>();
         builder.Services.AddTransient<IDataSeeder, DataSeeder>();
         builder.Services.AddTransient<INotificationService, NotificationService>();
@@ -67,8 +69,7 @@ public class Program
             app.UseSwaggerUI();
         }
         
-        // empty lambda function is needed to prevent application startup crash.
-        app.UseExceptionHandler(_ => { });
+        app.UseExceptionHandler();
         
         app.UseHttpsRedirection();
 
