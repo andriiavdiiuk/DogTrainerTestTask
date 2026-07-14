@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using DogTrainerTestTask.Data.Entities;
 using DogTrainerTestTask.Middleware;
+using DogTrainerTestTask.Services;
+using DogTrainerTestTask.Services.Impl;
 
 namespace DogTrainerTestTask;
 
@@ -21,7 +23,6 @@ public class Program
                 o.EnableDetailedErrors();
                 o.EnableSensitiveDataLogging();
             }
-            o.UseSeeding(DataConfiguration.SeedEntities);
         });
 
         builder.Services.AddIdentity<User, UserRole>(o =>
@@ -41,8 +42,9 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-
-
+        
+        builder.Services.AddTransient<IDataSeeder, DataSeeder>();
+        
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -63,7 +65,11 @@ public class Program
         app.MapControllers();
 
         using var scope = app.Services.CreateScope();
-        scope.ServiceProvider.ConfigureRoles();
+
+        var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
+
+        seeder.Seed();
+        
         app.Run();
     }
 }
