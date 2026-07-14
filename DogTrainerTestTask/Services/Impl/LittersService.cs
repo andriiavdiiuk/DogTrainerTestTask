@@ -36,7 +36,7 @@ public class LittersService(AppDbContext dbContext, INotificationService notific
             throw new InvalidOperationException($"Breeder benefits do not exists for user {breederId}");
         }
         
-        bool exceedLimit = breederBenefits.UsedCount + 1 >= breederBenefits.FreeLimit;
+        bool exceedLimit = breederBenefits.UsedCount + 1 > breederBenefits.FreeLimit;
         if (exceedLimit)
         {
             dbContext.AuditLogs.Add(new AuditLog()
