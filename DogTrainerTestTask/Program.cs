@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using DogTrainerTestTask.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +6,7 @@ using DogTrainerTestTask.Data.Entities;
 using DogTrainerTestTask.Middleware;
 using DogTrainerTestTask.Services;
 using DogTrainerTestTask.Services.Impl;
+using Microsoft.AspNetCore.Http.Json;
 
 namespace DogTrainerTestTask;
 
@@ -37,12 +39,20 @@ public class Program
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
-        builder.Services.AddControllers();
+        builder.Services.Configure<JsonOptions>(o =>
+        {
+            o.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        });
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
+
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-        
         builder.Services.AddTransient<IDataSeeder, DataSeeder>();
         
         var app = builder.Build();
@@ -69,7 +79,7 @@ public class Program
         var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
 
         seeder.Seed();
-        
+
         app.Run();
     }
 }
