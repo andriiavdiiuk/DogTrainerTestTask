@@ -18,7 +18,7 @@ public class Program
 
         builder.Services.AddDbContext<AppDbContext>(o =>
         {
-            o.UseInMemoryDatabase("InMemoryDatabase");
+            o.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
 
             if (builder.Environment.IsDevelopment())
             {
@@ -55,11 +55,11 @@ public class Program
         builder.Services.AddProblemDetails();
         builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-        
+
         builder.Services.AddTransient<ILittersService, LittersService>();
         builder.Services.AddTransient<IDataSeeder, DataSeeder>();
         builder.Services.AddTransient<INotificationService, NotificationService>();
-        
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -68,9 +68,9 @@ public class Program
             app.UseSwagger();
             app.UseSwaggerUI();
         }
-        
+
         app.UseExceptionHandler();
-        
+
         app.UseHttpsRedirection();
 
         app.UseAuthorization();
@@ -78,11 +78,14 @@ public class Program
 
         app.MapControllers();
 
-        using var scope = app.Services.CreateScope();
+        using (var scope = app.Services.CreateScope())
+        {
+            var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
 
-        var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
-
-        seeder.Seed();
+            var dbcontext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            dbcontext.Database.EnsureCreated();
+            seeder.Seed();
+        }
 
         app.Run();
     }
