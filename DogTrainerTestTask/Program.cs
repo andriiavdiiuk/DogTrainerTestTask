@@ -56,6 +56,7 @@ public class Program
 
         builder.Services.AddTransient<ILittersService, LittersService>();
         builder.Services.AddTransient<IDataSeeder, DataSeeder>();
+        builder.Services.AddTransient<INotificationService, NotificationService>();
         
         var app = builder.Build();
 
