@@ -86,7 +86,7 @@ public class LittersService(AppDbContext dbContext, INotificationService notific
         
         var skipItems = (getLittersRequestDto.PageNumber - 1) * getLittersRequestDto.PageSize;
 
-        var totalCount = await dbContext.Litters.CountAsync();
+        var totalCount = await query.CountAsync();
         var items = await query
             .OrderByDescending(x => x.Id)
             .Skip(skipItems)
